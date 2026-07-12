@@ -3,7 +3,8 @@
 
 if SOC_NSIM_HS_SMP
 
-config CPU_HS3X
+# Repurposed to approximate the Autotalks Tekton "HS48x2" (ARC HS4x dual-core).
+config CPU_HS4X
 	default y
 
 config NUM_IRQ_PRIO_LEVELS
@@ -12,11 +13,24 @@ config NUM_IRQ_PRIO_LEVELS
 	default 2
 
 config NUM_IRQS
-	# must be > the highest interrupt number used
-	default 88
+	# must be > the highest interrupt number used (Autotalks: 137)
+	default 137
+
+config ARC_MPU_VER
+	default 6
+
+config MAX_DOMAIN_PARTITIONS
+	default 32 if USERSPACE
 
 config RGF_NUM_BANKS
+	# Autotalks HS48x2 has 4 banks, but Zephyr currently supports up to 2.
 	default 2
+
+config CODE_DENSITY
+	default y
+
+config ARCV2_TIMER_IRQ_PRIORITY
+	default 1
 
 config SYS_CLOCK_HW_CYCLES_PER_SEC
         # SMP simulation is slower than single core, 1 Mhz seems reasonable match with wallclock
