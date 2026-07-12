@@ -19,11 +19,18 @@ else()
 
   zephyr_ld_option_ifdef(CONFIG_SOC_NSIM_HS -Hlib=hs38_full)
 
-  zephyr_compile_options_ifdef(CONFIG_SOC_NSIM_HS_SMP -arcv2hs -core2 -Xatomic
-    -Xll64 -Xdiv_rem=radix4 -Xunaligned -Xcode_density -Xswap -Xbitscan -Xmpy_option=qmpyh
-    -Xshift_assist -Xbarrel_shifter -Xfpud_div -Xfpu_mac -Xrtc -Xtimer0 -Xtimer1)
+  # Repurposed to model Autotalks Tekton "HS48x2" (ARC HS4x dual-core) as
+  # closely as possible for nSIM runs. CPU options taken verbatim from the
+  # Autotalks .tcf 'ccac.arg' (minus CCM/ECC codegen which needs the exact
+  # Autotalks Harvard memory map).
+  zephyr_compile_options_ifdef(CONFIG_SOC_NSIM_HS_SMP -arcv2hs -core4 -Xdual_issue -uarch_rev=3:2
+    -Hrgf_num_banks=2 -Hrgf_banked_regs=32 -HL -Xatomic -Xll64 -Xunaligned -Xdiv_rem=radix4
+    -Xcode_density -Xswap -Xbitscan -Xmpy_option=qmpyh -Xshift_assist -Xbarrel_shifter
+    -Xfastmath_div -Xfastmath_sqrt -Xfastmath_sat -Xfastmath_trig -Xfpud_div -Xfpu_mac -Xfpu_hp
+    -Xtimer0 -Xtimer1 -Xrtc -Xstack_check -dcache=32768,64,2,a -Hld_cycles=2 -Xlpb_size=64)
 
-  zephyr_ld_option_ifdef(CONFIG_SOC_NSIM_HS_SMP -Hlib=hs38_full)
+  # HS48 core with a System-Level (L2) Cache -> hs48_slc_full runtime library.
+  zephyr_ld_option_ifdef(CONFIG_SOC_NSIM_HS_SMP -Hlib=hs48_slc_full)
 
   zephyr_compile_options_ifdef(CONFIG_SOC_NSIM_HS_MPUV6 -arcv2hs -core2 -Xatomic
     -Xll64 -Xdiv_rem=radix4 -Xunaligned -Xcode_density -Xswap -Xbitscan -Xmpy_option=qmpyh

@@ -5,3 +5,10 @@ config SOC_SERIES_NSIM_HS
 	select ARC
 	select CPU_HAS_FPU
 	select CPU_HAS_MPU if !SMP
+
+config SOC_NSIM_HS_SMP
+	# The Autotalks Tekton HS48x2 carries an MPUv6 in its SMP configuration, so
+	# the MPU has to be selectable for this SoC even though SMP is enabled. It
+	# stays hidden for the other SMP SoCs of this series, which model cores
+	# without an MPU.
+	select CPU_HAS_MPU
