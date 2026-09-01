@@ -26,8 +26,12 @@ config RGF_NUM_BANKS
 	# Autotalks HS48x2 has 4 banks, but Zephyr currently supports up to 2.
 	default 2
 
-config CODE_DENSITY
-	default y
+# CONFIG_CODE_DENSITY is deliberately left off even though the Autotalks
+# HS48x2 has the code density option. It does not gate the code density
+# instructions themselves (those come from the -Xcode_density/-mcode-density
+# compiler flag); it only asks the CPU to auto-save JLI_BASE/LDI_BASE/EI_BASE
+# into the interrupt stack frame. That path is marked "Currently unsupported"
+# in arch/arc/include/kernel_arch_data.h and corrupts the frame under SMP.
 
 config ARCV2_TIMER_IRQ_PRIORITY
 	default 1
