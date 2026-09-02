@@ -298,6 +298,7 @@ config HARVARD
 
 config CODE_DENSITY
 	bool "Code Density Option"
+	default y
 	help
 	  Enable code density option to get better code density
 
