@@ -14,8 +14,13 @@ menuconfig ARCV2_TIMER
 
 config ARCV2_TIMER_IRQ_PRIORITY
 	int "ARC timer interrupt priority"
-	default 0
+	default 0 if NUM_IRQ_PRIO_LEVELS < 2
+	default 1
 	depends on ARCV2_TIMER
 	help
 	  This option specifies the IRQ priority used by the ARC timer. Lower
 	  values have higher priority.
+
+	  Priority 0 is left free so that interrupts which have to preempt the
+	  system timer, such as the IRQ offload line, can nest inside it: ARCv2
+	  preempts only on a strictly higher priority.
