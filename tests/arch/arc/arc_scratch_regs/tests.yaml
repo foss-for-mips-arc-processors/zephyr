@@ -1,0 +1,4 @@
+tests:
+  arch.arc.scratch_regs:
+    arch_allow: arc
+    filter: CONFIG_MULTITHREADING
