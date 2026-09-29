@@ -265,17 +265,10 @@ _skip_pm_save_idle_exit:
 SECTION_FUNC(TEXT, _isr_demux)
 	PUSHR r3
 
-/* according to ARCv2 ISA, r25, r30, r58, r59 are caller-saved
- * scratch registers, possibly used by interrupt handlers
+/* r30, r58 and r59 are saved by the entry stub (_push_irq_scratch_regs,
+ * or bank 1 copies for a FIRQ with a second register bank)
  */
 	PUSHR r25
-	PUSHR r30
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	PUSHR r58
-#ifndef CONFIG_64BIT
-	PUSHR r59
-#endif /* !CONFIG_64BIT */
-#endif
 
 #ifdef CONFIG_SCHED_THREAD_USAGE
 	bl z_sched_usage_stop
@@ -311,14 +304,6 @@ irq_hint_handled:
 	bl sys_trace_isr_exit
 #endif
 
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-#ifndef CONFIG_64BIT
-	POPR r59
-#endif /* !CONFIG_64BIT */
-	POPR r58
-#endif
-
-	POPR r30
 	POPR r25
 
 	/* back from ISR, jump to exit stub */

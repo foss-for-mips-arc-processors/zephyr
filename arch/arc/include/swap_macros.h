@@ -173,6 +173,33 @@ fpu_skip_load :
 .endm
 
 /*
+ * r30 and r58/r59 are caller-saved (scratch) registers of the C ABI that
+ * the processor does not save on interrupt entry. They are pushed right
+ * below the IRQ stack frame before any C code runs in the interrupt, and
+ * popped only after the last C call made on the way back to the
+ * interrupted context, right before rtie or _pop_irq_stack_frame.
+ */
+.macro _push_irq_scratch_regs
+	PUSHR r30
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	PUSHR r58
+#ifndef CONFIG_64BIT
+	PUSHR r59
+#endif /* !CONFIG_64BIT */
+#endif
+.endm
+
+.macro _pop_irq_scratch_regs
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+#ifndef CONFIG_64BIT
+	POPR r59
+#endif /* !CONFIG_64BIT */
+	POPR r58
+#endif
+	POPR r30
+.endm
+
+/*
  * Must be called with interrupts locked or in P0.
  * Upon exit, sp will be pointing to the stack frame.
  */

@@ -23,13 +23,29 @@
 GTEXT(_firq_enter)
 GTEXT(_firq_exit)
 
+#if CONFIG_RGF_NUM_BANKS != 1
+/*
+ * Restore the registers that are not banked from their copies in the bank 1
+ * callee-saved registers. Must run after the last C call of the FIRQ.
+ */
+.macro _firq_restore_unbanked_regs
+	mov lp_count, r23
+	sr r24, [_ARC_V2_LP_START]
+	sr r25, [_ARC_V2_LP_END]
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	mov r58, r21
+	mov r59, r22
+#endif
+.endm
+#endif
+
 /**
  * @brief Work to be done before handing control to a FIRQ ISR
  *
  * The processor switches to a second register bank so registers from the
  * current bank do not have to be preserved yet. The only issue is the LP_START/
- * LP_COUNT/LP_END registers, which are not banked. These can be saved
- * in available callee saved registers.
+ * LP_COUNT/LP_END registers and the r58/r59 accumulator, which are not banked.
+ * These can be saved in available callee saved registers.
  *
  * If all FIRQ ISRs are programmed such that there are no use of the LP
  * registers (ie. no LPcc instruction), and CONFIG_ARC_STACK_CHECKING is
@@ -48,8 +64,13 @@ SECTION_FUNC(TEXT, _firq_enter)
  * If CONFIG_RGF_NUM_BANKS>1, firq uses a 2nd register bank so GPRs do
  * not need to be saved.
  * If CONFIG_RGF_NUM_BANKS==1, firq must use the stack to save registers.
- * This has already been done by _isr_wrapper.
+ * This has already been done by _isr_wrapper, except for the scratch
+ * registers that are not part of the IRQ stack frame.
  */
+#if CONFIG_RGF_NUM_BANKS == 1
+	_push_irq_scratch_regs
+#endif
+
 #ifdef CONFIG_ARC_STACK_CHECKING
 #ifdef CONFIG_ARC_SECURE_FIRMWARE
 	lr r2, [_ARC_V2_SEC_STAT]
@@ -72,6 +93,10 @@ SECTION_FUNC(TEXT, _firq_enter)
 	mov r23,lp_count
 	lr r24, [_ARC_V2_LP_START]
 	lr r25, [_ARC_V2_LP_END]
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	mov r21, r58
+	mov r22, r59
+#endif
 #endif
 
 	/* check whether irq stack is used */
@@ -133,12 +158,6 @@ firq_nest:
 
 SECTION_FUNC(TEXT, _firq_exit)
 
-#if CONFIG_RGF_NUM_BANKS != 1
-	/* restore lp_count, lp_start, lp_end from r23-r25 */
-	mov lp_count,r23
-	sr r24, [_ARC_V2_LP_START]
-	sr r25, [_ARC_V2_LP_END]
-#endif
 	_dec_int_nest_counter r0, r1
 
 	_check_nest_int_by_irq_act r0, r1
@@ -158,6 +177,9 @@ SECTION_FUNC(TEXT, _firq_exit)
 
 .align 4
 _firq_no_switch:
+#if CONFIG_RGF_NUM_BANKS != 1
+	_firq_restore_unbanked_regs
+#endif
 	/* restore interrupted context' sp */
 	pop sp
 	/*
@@ -165,12 +187,16 @@ _firq_no_switch:
 	 * instruction instead of a pair of cmp and bxx
 	 */
 #if CONFIG_RGF_NUM_BANKS == 1
+	_pop_irq_scratch_regs
 	_pop_irq_stack_frame
 #endif
 	rtie
 
 .align 4
 _firq_switch:
+#if CONFIG_RGF_NUM_BANKS != 1
+	_firq_restore_unbanked_regs
+#endif
 	/* restore interrupted context' sp */
 	pop sp
 
@@ -230,6 +256,8 @@ _firq_create_irq_stack_frame:
 	st_s r0, [sp, ___isf_t_status32_OFFSET]
 
 	st ilink, [sp, ___isf_t_pc_OFFSET] /* ilink into pc */
+
+	_push_irq_scratch_regs
 /*
  * load r0, r2 from irq stack
  */
@@ -281,12 +309,6 @@ _firq_switch_from_firq:
 
 	_set_misc_regs_irq_switch_from_irq
 
-	_pop_irq_stack_frame
-
-	ld ilink, [sp, -4] /* status32 into ilink */
-	sr ilink, [_ARC_V2_STATUS32_P0]
-	ld ilink, [sp, -8] /* pc into ilink */
-
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	push_s blink
 
@@ -294,5 +316,13 @@ _firq_switch_from_firq:
 
 	pop_s blink
 #endif
+	/* no C call is allowed below: it would corrupt the restored registers */
+	_pop_irq_scratch_regs
+	_pop_irq_stack_frame
+
+	ld ilink, [sp, -4] /* status32 into ilink */
+	sr ilink, [_ARC_V2_STATUS32_P0]
+	ld ilink, [sp, -8] /* pc into ilink */
+
 	/* LP registers are already restored, just switch back to bank 0 */
 	rtie

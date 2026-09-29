@@ -200,6 +200,7 @@ will be corrupted.
  */
 
 SECTION_FUNC(TEXT, _rirq_enter)
+	_push_irq_scratch_regs
 
 /* the ISR will be handled in separate interrupt stack,
  * so stack checking must be disabled, or exception will
@@ -332,4 +333,5 @@ _rirq_switch_from_rirq:
 	POPR blink
 #endif
 _rirq_no_switch:
+	_pop_irq_scratch_regs
 	rtie
