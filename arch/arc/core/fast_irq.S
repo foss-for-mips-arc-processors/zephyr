@@ -281,12 +281,6 @@ _firq_switch_from_firq:
 
 	_set_misc_regs_irq_switch_from_irq
 
-	_pop_irq_stack_frame
-
-	ld ilink, [sp, -4] /* status32 into ilink */
-	sr ilink, [_ARC_V2_STATUS32_P0]
-	ld ilink, [sp, -8] /* pc into ilink */
-
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	push_s blink
 
@@ -294,5 +288,12 @@ _firq_switch_from_firq:
 
 	pop_s blink
 #endif
+	/* no C call is allowed below: it would corrupt the restored registers */
+	_pop_irq_stack_frame
+
+	ld ilink, [sp, -4] /* status32 into ilink */
+	sr ilink, [_ARC_V2_STATUS32_P0]
+	ld ilink, [sp, -8] /* pc into ilink */
+
 	/* LP registers are already restored, just switch back to bank 0 */
 	rtie
