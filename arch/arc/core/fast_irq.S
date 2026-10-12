@@ -23,6 +23,18 @@
 GTEXT(_firq_enter)
 GTEXT(_firq_exit)
 
+#if CONFIG_RGF_NUM_BANKS != 1
+/*
+ * restore lp_count, lp_start, lp_end from r23-r25
+ * must run after the last C call of the FIRQ
+ */
+.macro _firq_restore_unbanked_regs
+	mov lp_count, r23
+	sr r24, [_ARC_V2_LP_START]
+	sr r25, [_ARC_V2_LP_END]
+.endm
+#endif
+
 /**
  * @brief Work to be done before handing control to a FIRQ ISR
  *
@@ -133,12 +145,6 @@ firq_nest:
 
 SECTION_FUNC(TEXT, _firq_exit)
 
-#if CONFIG_RGF_NUM_BANKS != 1
-	/* restore lp_count, lp_start, lp_end from r23-r25 */
-	mov lp_count,r23
-	sr r24, [_ARC_V2_LP_START]
-	sr r25, [_ARC_V2_LP_END]
-#endif
 	_dec_int_nest_counter r0, r1
 
 	_check_nest_int_by_irq_act r0, r1
@@ -158,6 +164,9 @@ SECTION_FUNC(TEXT, _firq_exit)
 
 .align 4
 _firq_no_switch:
+#if CONFIG_RGF_NUM_BANKS != 1
+	_firq_restore_unbanked_regs
+#endif
 	/* restore interrupted context' sp */
 	pop sp
 	/*
@@ -171,6 +180,9 @@ _firq_no_switch:
 
 .align 4
 _firq_switch:
+#if CONFIG_RGF_NUM_BANKS != 1
+	_firq_restore_unbanked_regs
+#endif
 	/* restore interrupted context' sp */
 	pop sp
 
