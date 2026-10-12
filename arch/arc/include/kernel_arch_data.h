@@ -140,14 +140,6 @@ struct _callee_saved_stack {
 #endif
 	/* r28 is the stack pointer and saved separately */
 	/* r29 is ILINK and does not need to be saved */
-	uintptr_t r30;
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	uintptr_t r58;
-#ifndef CONFIG_64BIT
-	uintptr_t r59;
-#endif /* !CONFIG_64BIT */
-#endif
 
 #ifdef CONFIG_FPU_SHARING
 	uintptr_t fpu_status;

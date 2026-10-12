@@ -59,14 +59,6 @@
 	st_s r13, [sp, ___callee_saved_stack_t_user_sp_OFFSET]
 #endif
 #endif
-	STR r30, sp, ___callee_saved_stack_t_r30_OFFSET
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	STR r58, sp, ___callee_saved_stack_t_r58_OFFSET
-#ifndef CONFIG_64BIT
-	STR r59, sp, ___callee_saved_stack_t_r59_OFFSET
-#endif /* !CONFIG_64BIT */
-#endif
 
 #ifdef CONFIG_FPU_SHARING
 	ld_s r13, [r2, ___thread_base_t_user_options_OFFSET]
@@ -97,13 +89,6 @@ fpu_skip_save :
 .macro _load_callee_saved_regs
 	/* restore stack pointer from struct k_thread */
 	LDR sp, r2, _thread_offset_to_sp
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	LDR r58, sp, ___callee_saved_stack_t_r58_OFFSET
-#ifndef CONFIG_64BIT
-	LDR r59, sp, ___callee_saved_stack_t_r59_OFFSET
-#endif /* !CONFIG_64BIT */
-#endif
 
 #ifdef CONFIG_FPU_SHARING
 	ld_s r13, [r2, ___thread_base_t_user_options_OFFSET]
@@ -161,7 +146,6 @@ fpu_skip_load :
 	LDR r25, sp, ___callee_saved_stack_t_r25_OFFSET
 	LDR r26, sp, ___callee_saved_stack_t_r26_OFFSET
 	LDR fp,  sp, ___callee_saved_stack_t_fp_OFFSET
-	LDR r30, sp, ___callee_saved_stack_t_r30_OFFSET
 
 	ADDR sp, sp, ___callee_saved_stack_t_SIZEOF
 
@@ -170,6 +154,31 @@ fpu_skip_load :
 /* discard callee regs */
 .macro _discard_callee_saved_regs
 	ADDR sp, sp, ___callee_saved_stack_t_SIZEOF
+.endm
+
+/*
+ * Scratch registers that the processor does not save on interrupt entry:
+ * r30 and r58/r59. Push them before any C code runs in the interrupt, and
+ * pop them after the last C call, right before rtie or _pop_irq_stack_frame.
+ */
+.macro _push_irq_scratch_regs
+	PUSHR r30
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	PUSHR r58
+#ifndef CONFIG_64BIT
+	PUSHR r59
+#endif /* !CONFIG_64BIT */
+#endif
+.endm
+
+.macro _pop_irq_scratch_regs
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+#ifndef CONFIG_64BIT
+	POPR r59
+#endif /* !CONFIG_64BIT */
+	POPR r58
+#endif
+	POPR r30
 .endm
 
 /*
@@ -460,6 +469,11 @@ fpu_skip_load :
 .macro _load_new_thread_callee_regs
 #ifdef CONFIG_ARC_STACK_CHECKING
 	_load_stack_check_regs
+#endif
+#if defined(CONFIG_ISA_ARCV3) && defined(CONFIG_THREAD_LOCAL_STORAGE) && \
+	!defined(__CCAC__)
+	/* GCC uses r30 as the thread pointer on ARCv3 */
+	LDR r30, r2, _thread_offset_to_tls
 #endif
 	/*
 	 * _load_callee_saved_regs expects incoming thread in r2.

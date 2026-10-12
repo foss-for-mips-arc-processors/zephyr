@@ -134,8 +134,9 @@ static inline void arch_setup_callee_saved_regs(struct k_thread *thread,
 	/* __ARC_TLS_REGNO__ is used for thread pointer for ARCv2 */
 	regs->TLSREG = thread->tls;
 #else
-	/* R30 is used for thread pointer for ARCv3 */
-	regs->r30 = thread->tls;
+	/* R30 is used for thread pointer for ARCv3, loaded from thread->tls
+	 * in _load_new_thread_callee_regs
+	 */
 #endif /* CONFIG_ISA_ARCV2 */
 #endif
 }
