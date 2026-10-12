@@ -158,4 +158,6 @@ _switch_return_from_firq:
 
 	POPR blink
 #endif
+	_load_irq_sw_regs
+	ADDR sp, sp, ___isf_t_sw_SIZEOF
 	rtie

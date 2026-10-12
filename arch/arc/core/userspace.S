@@ -215,7 +215,6 @@ SECTION_FUNC(TEXT, _arc_do_syscall)
 	st_s r0, [sp, ___isf_t_r0_OFFSET]
 
 	mov r29, 0
-	mov r30, 0
 
 	/* through fake exception return, go back to the caller */
 	lr r0, [_ARC_V2_STATUS32]

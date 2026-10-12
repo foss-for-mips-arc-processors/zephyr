@@ -192,7 +192,8 @@ will be corrupted.
 /**
  * @brief Work to be done before handing control to an IRQ ISR
  *
- * The processor pushes automatically all registers that need to be saved.
+ * The processor pushes automatically the IRQ stack frame, except for the
+ * registers at its start that are stored here.
  * However, since the processor always runs at kernel privilege there is no
  * automatic switch to the IRQ stack: this must be done in software.
  *
@@ -200,6 +201,8 @@ will be corrupted.
  */
 
 SECTION_FUNC(TEXT, _rirq_enter)
+	SUBR sp, sp, ___isf_t_sw_SIZEOF
+	_store_irq_sw_regs
 
 /* the ISR will be handled in separate interrupt stack,
  * so stack checking must be disabled, or exception will
@@ -293,6 +296,8 @@ _rirq_switch_from_coop:
 	/* carve fake stack */
 	SUBR sp, sp, ___isf_t_pc_OFFSET
 
+	/* the registers that rtie does not pop keep their current values */
+	_store_irq_sw_regs
 
 #ifdef CONFIG_ARC_HAS_ZOL
 	/* reset zero-overhead loops */
@@ -315,6 +320,8 @@ _rirq_switch_from_coop:
 	POPR blink
 #endif
 	/* stack now has the IRQ stack frame layout, pointing to sp */
+	_load_irq_sw_regs
+	ADDR sp, sp, ___isf_t_sw_SIZEOF
 	/* rtie will pop the rest from the stack */
 	rtie
 
@@ -332,4 +339,6 @@ _rirq_switch_from_rirq:
 	POPR blink
 #endif
 _rirq_no_switch:
+	_load_irq_sw_regs
+	ADDR sp, sp, ___isf_t_sw_SIZEOF
 	rtie

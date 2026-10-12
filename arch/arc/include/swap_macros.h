@@ -59,13 +59,8 @@
 	st_s r13, [sp, ___callee_saved_stack_t_user_sp_OFFSET]
 #endif
 #endif
+#if defined(CONFIG_ISA_ARCV3) && defined(CONFIG_THREAD_LOCAL_STORAGE) && !defined(__CCAC__)
 	STR r30, sp, ___callee_saved_stack_t_r30_OFFSET
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	STR r58, sp, ___callee_saved_stack_t_r58_OFFSET
-#ifndef CONFIG_64BIT
-	STR r59, sp, ___callee_saved_stack_t_r59_OFFSET
-#endif /* !CONFIG_64BIT */
 #endif
 
 #ifdef CONFIG_FPU_SHARING
@@ -97,13 +92,6 @@ fpu_skip_save :
 .macro _load_callee_saved_regs
 	/* restore stack pointer from struct k_thread */
 	LDR sp, r2, _thread_offset_to_sp
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	LDR r58, sp, ___callee_saved_stack_t_r58_OFFSET
-#ifndef CONFIG_64BIT
-	LDR r59, sp, ___callee_saved_stack_t_r59_OFFSET
-#endif /* !CONFIG_64BIT */
-#endif
 
 #ifdef CONFIG_FPU_SHARING
 	ld_s r13, [r2, ___thread_base_t_user_options_OFFSET]
@@ -161,7 +149,9 @@ fpu_skip_load :
 	LDR r25, sp, ___callee_saved_stack_t_r25_OFFSET
 	LDR r26, sp, ___callee_saved_stack_t_r26_OFFSET
 	LDR fp,  sp, ___callee_saved_stack_t_fp_OFFSET
+#if defined(CONFIG_ISA_ARCV3) && defined(CONFIG_THREAD_LOCAL_STORAGE) && !defined(__CCAC__)
 	LDR r30, sp, ___callee_saved_stack_t_r30_OFFSET
+#endif
 
 	ADDR sp, sp, ___callee_saved_stack_t_SIZEOF
 
@@ -170,6 +160,38 @@ fpu_skip_load :
 /* discard callee regs */
 .macro _discard_callee_saved_regs
 	ADDR sp, sp, ___callee_saved_stack_t_SIZEOF
+.endm
+
+/*
+ * Caller-saved registers of the IRQ stack frame that the processor does not
+ * save on a regular IRQ: r30, r58/r59 and, with a vector DSP unit, r25. sp
+ * must be pointing to the stack frame. On a regular IRQ, store them before
+ * any C code runs and load them after the last C call, right before rtie.
+ */
+.macro _store_irq_sw_regs
+	STR r30, sp, ___isf_t_r30_OFFSET
+#ifdef __Xvdsp
+	STR r25, sp, ___isf_t_r25_OFFSET
+#endif
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	STR r58, sp, ___isf_t_r58_OFFSET
+#ifndef CONFIG_64BIT
+	STR r59, sp, ___isf_t_r59_OFFSET
+#endif /* !CONFIG_64BIT */
+#endif
+.endm
+
+.macro _load_irq_sw_regs
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+#ifndef CONFIG_64BIT
+	LDR r59, sp, ___isf_t_r59_OFFSET
+#endif /* !CONFIG_64BIT */
+	LDR r58, sp, ___isf_t_r58_OFFSET
+#endif
+#ifdef __Xvdsp
+	LDR r25, sp, ___isf_t_r25_OFFSET
+#endif
+	LDR r30, sp, ___isf_t_r30_OFFSET
 .endm
 
 /*
@@ -198,6 +220,8 @@ fpu_skip_load :
 	STR r2,  sp, ___isf_t_r2_OFFSET
 	STR r1,  sp, ___isf_t_r1_OFFSET
 	STR r0,  sp, ___isf_t_r0_OFFSET
+
+	_store_irq_sw_regs
 
 #ifdef CONFIG_ARC_HAS_ZOL
 	MOVR r0, lp_count
@@ -244,6 +268,8 @@ fpu_skip_load :
 	SRR r1, [_ARC_V2_LP_START]
 	SRR r0, [_ARC_V2_LP_END]
 #endif /* CONFIG_ARC_HAS_ZOL */
+
+	_load_irq_sw_regs
 
 	LDR r13, sp, ___isf_t_r13_OFFSET
 	LDR r12, sp, ___isf_t_r12_OFFSET

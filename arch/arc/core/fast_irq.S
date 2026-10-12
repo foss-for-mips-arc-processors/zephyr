@@ -25,23 +25,35 @@ GTEXT(_firq_exit)
 
 #if CONFIG_RGF_NUM_BANKS != 1
 /*
- * save lp_count, lp_start, lp_end in r23-r25
+ * save lp_count, lp_start, lp_end in r22-r24 and r58/r59 in r20/r21
  * must run before the first C call of the FIRQ
  */
 .macro _firq_save_unbanked_regs
-	mov r23, lp_count
-	lr r24, [_ARC_V2_LP_START]
-	lr r25, [_ARC_V2_LP_END]
+	mov r22, lp_count
+	lr r23, [_ARC_V2_LP_START]
+	lr r24, [_ARC_V2_LP_END]
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	mov r20, r58
+#ifndef CONFIG_64BIT
+	mov r21, r59
+#endif /* !CONFIG_64BIT */
+#endif
 .endm
 
 /*
- * restore lp_count, lp_start, lp_end from r23-r25
+ * restore lp_count, lp_start, lp_end from r22-r24 and r58/r59 from r20/r21
  * must run after the last C call of the FIRQ
  */
 .macro _firq_restore_unbanked_regs
-	mov lp_count, r23
-	sr r24, [_ARC_V2_LP_START]
-	sr r25, [_ARC_V2_LP_END]
+	mov lp_count, r22
+	sr r23, [_ARC_V2_LP_START]
+	sr r24, [_ARC_V2_LP_END]
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	mov r58, r20
+#ifndef CONFIG_64BIT
+	mov r59, r21
+#endif /* !CONFIG_64BIT */
+#endif
 .endm
 #endif
 
@@ -50,8 +62,8 @@ GTEXT(_firq_exit)
  *
  * The processor switches to a second register bank so registers from the
  * current bank do not have to be preserved yet. The only issue is the LP_START/
- * LP_COUNT/LP_END registers, which are not banked. These can be saved
- * in available callee saved registers.
+ * LP_COUNT/LP_END registers and the r58/r59 accumulator, which are not banked.
+ * These can be saved in available callee saved registers.
  *
  * If all FIRQ ISRs are programmed such that there are no use of the LP
  * registers (ie. no LPcc instruction), and CONFIG_ARC_STACK_CHECKING is
@@ -87,7 +99,8 @@ SECTION_FUNC(TEXT, _firq_enter)
 
 #if CONFIG_RGF_NUM_BANKS != 1
 	/*
-	 * Save LP_START/LP_COUNT/LP_END because called handler might use.
+	 * Save LP_START/LP_COUNT/LP_END and r58/r59 because called handler
+	 * might use.
 	 * Save these in callee saved registers to avoid using memory.
 	 * These will be saved by the compiler if it needs to spill them.
 	 */

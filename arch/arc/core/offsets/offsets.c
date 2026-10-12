@@ -46,6 +46,16 @@ GEN_OFFSET_SYM(_thread_arch_t, priv_stack_start);
 
 
 /* ARCv2-specific IRQ stack frame structure member offsets */
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+GEN_OFFSET_SYM(_isf_t, r58);
+#ifndef CONFIG_64BIT
+GEN_OFFSET_SYM(_isf_t, r59);
+#endif /* !CONFIG_64BIT */
+#endif
+#ifdef __Xvdsp
+GEN_OFFSET_SYM(_isf_t, r25);
+#endif
+GEN_OFFSET_SYM(_isf_t, r30);
 GEN_OFFSET_SYM(_isf_t, r0);
 GEN_OFFSET_SYM(_isf_t, r1);
 GEN_OFFSET_SYM(_isf_t, r2);
@@ -77,6 +87,8 @@ GEN_OFFSET_SYM(_isf_t, sec_stat);
 #endif
 GEN_OFFSET_SYM(_isf_t, status32);
 GEN_ABSOLUTE_SYM(___isf_t_SIZEOF, sizeof(_isf_t));
+/* size of the part of the IRQ stack frame saved by software on a regular IRQ */
+GEN_ABSOLUTE_SYM(___isf_t_sw_SIZEOF, offsetof(_isf_t, r30) + sizeof(uintptr_t));
 
 GEN_OFFSET_SYM(_callee_saved_t, sp);
 
@@ -103,12 +115,8 @@ GEN_OFFSET_SYM(_callee_saved_stack_t, user_sp);
 GEN_OFFSET_SYM(_callee_saved_stack_t, user_sp);
 #endif
 #endif
+#if defined(CONFIG_ISA_ARCV3) && defined(CONFIG_THREAD_LOCAL_STORAGE) && !defined(__CCAC__)
 GEN_OFFSET_SYM(_callee_saved_stack_t, r30);
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-GEN_OFFSET_SYM(_callee_saved_stack_t, r58);
-#ifndef CONFIG_64BIT
-GEN_OFFSET_SYM(_callee_saved_stack_t, r59);
-#endif /* !CONFIG_64BIT */
 #endif
 #ifdef CONFIG_FPU_SHARING
 GEN_OFFSET_SYM(_callee_saved_stack_t, fpu_status);

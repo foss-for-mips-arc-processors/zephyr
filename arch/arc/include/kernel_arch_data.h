@@ -37,6 +37,22 @@ extern "C" {
 
 #ifdef CONFIG_ARC_HAS_SECURE
 struct arch_esf {
+	/*
+	 * Not saved by the processor on a regular IRQ, so software saves them
+	 * below the part it saves. r30 must stay last: ___isf_t_sw_SIZEOF is
+	 * computed from its offset.
+	 */
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	uintptr_t r58;
+#ifndef CONFIG_64BIT
+	uintptr_t r59;
+#endif /* !CONFIG_64BIT */
+#endif
+#ifdef __Xvdsp
+	/* the compiler uses r25 as scratch with a vector DSP unit */
+	uintptr_t r25;
+#endif
+	uintptr_t r30;
 #ifdef CONFIG_ARC_HAS_ZOL
 	uintptr_t lp_end;
 	uintptr_t lp_start;
@@ -73,6 +89,22 @@ struct arch_esf {
 };
 #else
 struct arch_esf {
+	/*
+	 * Not saved by the processor on a regular IRQ, so software saves them
+	 * below the part it saves. r30 must stay last: ___isf_t_sw_SIZEOF is
+	 * computed from its offset.
+	 */
+#ifdef CONFIG_ARC_HAS_ACCL_REGS
+	uintptr_t r58;
+#ifndef CONFIG_64BIT
+	uintptr_t r59;
+#endif /* !CONFIG_64BIT */
+#endif
+#ifdef __Xvdsp
+	/* the compiler uses r25 as scratch with a vector DSP unit */
+	uintptr_t r25;
+#endif
+	uintptr_t r30;
 	uintptr_t r0;
 	uintptr_t r1;
 	uintptr_t r2;
@@ -140,13 +172,9 @@ struct _callee_saved_stack {
 #endif
 	/* r28 is the stack pointer and saved separately */
 	/* r29 is ILINK and does not need to be saved */
+#if defined(CONFIG_ISA_ARCV3) && defined(CONFIG_THREAD_LOCAL_STORAGE) && !defined(__CCAC__)
+	/* GCC uses r30 as the thread pointer on ARCv3 */
 	uintptr_t r30;
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	uintptr_t r58;
-#ifndef CONFIG_64BIT
-	uintptr_t r59;
-#endif /* !CONFIG_64BIT */
 #endif
 
 #ifdef CONFIG_FPU_SHARING
