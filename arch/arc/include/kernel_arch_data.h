@@ -140,13 +140,13 @@ struct _callee_saved_stack {
 #endif
 	/* r28 is the stack pointer and saved separately */
 	/* r29 is ILINK and does not need to be saved */
+#ifdef CONFIG_ISA_ARCV3
+	/*
+	 * r30 is not a scratch register on ARCv3, so it is kept per thread.
+	 * On ARCv2, r30 and r58/r59 are scratch registers and are saved in
+	 * the interrupt scratch frame instead.
+	 */
 	uintptr_t r30;
-
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
-	uintptr_t r58;
-#ifndef CONFIG_64BIT
-	uintptr_t r59;
-#endif /* !CONFIG_64BIT */
 #endif
 
 #ifdef CONFIG_FPU_SHARING

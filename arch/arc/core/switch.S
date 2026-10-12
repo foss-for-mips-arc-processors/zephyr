@@ -158,4 +158,5 @@ _switch_return_from_firq:
 
 	POPR blink
 #endif
+	_pop_irq_scratch_regs
 	rtie
