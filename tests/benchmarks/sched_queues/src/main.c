@@ -47,6 +47,7 @@ static void busy_entry(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p3);
 
 	while (1) {
+		arch_nop();
 	}
 }
 
@@ -62,6 +63,7 @@ static void test_entry(void *p1, void *p2, void *p3)
 	       (unsigned int)(uintptr_t)p1);
 
 	while (1) {
+		arch_nop();
 	}
 }
 

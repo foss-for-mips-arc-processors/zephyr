@@ -44,6 +44,7 @@ FUNC_NORETURN void cpu_fn(void *arg)
 	cpu_running[cpu_id] = 1;
 
 	while (1) {
+		arch_nop();
 	}
 }
 
