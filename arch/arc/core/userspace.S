@@ -13,7 +13,9 @@
 #include <swap_macros.h>
 #include <v2/irq.h>
 
-.macro clear_scratch_regs
+/* clear the core registers on the first entry to user mode, except sp and gp */
+.macro clear_regs
+	mov_s r0, 0
 	mov_s r1, 0
 	mov_s r2, 0
 	mov_s r3, 0
@@ -26,23 +28,23 @@
 	mov_s r10, 0
 	mov_s r11, 0
 	mov_s r12, 0
-.endm
-
-.macro clear_callee_regs
-	mov_s r25, 0
-	mov_s r24, 0
-	mov_s r23, 0
-	mov_s r22, 0
-	mov_s r21, 0
-	mov_s r20, 0
-	mov_s r19, 0
-	mov_s r18, 0
-	mov_s r17, 0
-	mov_s r16, 0
-
-	mov_s r15, 0
-	mov_s r14, 0
 	mov_s r13, 0
+	mov_s r14, 0
+	mov_s r15, 0
+	mov_s r16, 0
+	mov_s r17, 0
+	mov_s r18, 0
+	mov_s r19, 0
+	mov_s r20, 0
+	mov_s r21, 0
+	mov_s r22, 0
+	mov_s r23, 0
+	mov_s r24, 0
+	mov_s r25, 0
+	mov fp, 0
+	mov r29, 0
+	mov r30, 0
+	mov blink, 0
 .endm
 
 GTEXT(z_arc_userspace_enter)
@@ -168,16 +170,7 @@ _arc_go_to_user_space:
 #endif
 	mov_s sp, blink
 
-	mov_s r0, 0
-
-	clear_callee_regs
-
-	clear_scratch_regs
-
-	mov fp, 0
-	mov r29, 0
-	mov r30, 0
-	mov blink, 0
+	clear_regs
 
 	rtie
 
