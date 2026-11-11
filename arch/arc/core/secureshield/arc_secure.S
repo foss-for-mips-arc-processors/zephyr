@@ -7,6 +7,7 @@
 #include <zephyr/linker/sections.h>
 #include <zephyr/arch/cpu.h>
 
+/* clear the caller-saved registers, except r0 which holds the return value */
 .macro clear_scratch_regs
 	mov r1, 0
 	mov r2, 0
@@ -20,23 +21,28 @@
 	mov r10, 0
 	mov r11, 0
 	mov r12, 0
+	mov r30, 0
 .endm
 
-.macro clear_callee_regs
-	mov r25, 0
-	mov r24, 0
-	mov r23, 0
-	mov r22, 0
-	mov r21, 0
-	mov r20, 0
-	mov r19, 0
-	mov r18, 0
-	mov r17, 0
-	mov r16, 0
-
-	mov r15, 0
-	mov r14, 0
+/* clear the core registers, except r0 which holds the entry point, sp and gp */
+.macro clear_regs
+	clear_scratch_regs
 	mov r13, 0
+	mov r14, 0
+	mov r15, 0
+	mov r16, 0
+	mov r17, 0
+	mov r18, 0
+	mov r19, 0
+	mov r20, 0
+	mov r21, 0
+	mov r22, 0
+	mov r23, 0
+	mov r24, 0
+	mov r25, 0
+	mov fp, 0
+	mov r29, 0
+	mov blink, 0
 .endm
 
 GTEXT(arc_go_to_normal)
@@ -64,7 +70,6 @@ SECTION_FUNC(TEXT, _arc_do_secure_call)
 	clear_scratch_regs
 
 	mov r29, 0
-	mov r30, 0
 
 
 _arc_do_secure_call_exit:
@@ -108,13 +113,7 @@ __seti_1:
 
 
 SECTION_FUNC(TEXT, arc_go_to_normal)
-	clear_callee_regs
-	clear_scratch_regs
-
-	mov fp, 0
-	mov r29, 0
-	mov r30, 0
-	mov blink, 0
+	clear_regs
 
 	jl [r0]
 	/* should not come here */
