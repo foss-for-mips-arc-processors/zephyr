@@ -10,10 +10,13 @@ config NUM_IRQS
 	default 32
 
 config PMP_SLOTS
-	default 16
+	default 32
 
 config PMP_GRANULARITY
-	default 8
+	default 32
+
+config MAX_DOMAIN_PARTITIONS
+	default 32 if USERSPACE
 
 config RISCV_PMP
 	default y
