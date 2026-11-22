@@ -19,7 +19,7 @@ config RISCV_PMP
 	default y
 
 config PMP_SLOTS
-	default 16
+	default 4
 
 config PMP_GRANULARITY
 	default 8
