@@ -9,6 +9,8 @@ toolchain:
   - zephyr
   - cross-compile
   - arcmwdt
+ram: 128
+flash: 1024
 testing:
   ignore_tags:
     - net

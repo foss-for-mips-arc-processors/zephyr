@@ -1,8 +1,13 @@
 #include "rmx1xx.dtsi"
 
 / {
-	ddr0: memory@80000000 {
-		reg = <0x80000000 0x10000000>; /* 256 MB */
+	sram0: memory@0 {
+		reg = <0x0 0x100000>; /* 1 MB */
+		device_type = "memory";
+	};
+
+	dccm0: memory@200000 {
+		reg = <0x200000 0x20000>; /* 128 KB */
 		device_type = "memory";
 	};
 };
