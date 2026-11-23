@@ -19,9 +19,9 @@ config RISCV_PMP
 	default y
 
 config PMP_SLOTS
-	default 16
+	default 8
 
 config PMP_GRANULARITY
-	default 8
+	default 32
 
 endif # SOC_SERIES_RMX
