@@ -9,3 +9,16 @@ config SOC_SERIES_RMX
 	select RISCV_SMRNMI_ENABLE_NMI_DELIVERY
 	select INCLUDE_RESET_VECTOR
 	imply XIP
+
+config SOC_RMX_UART_DEVICE_PMA
+	bool "Mark the uart0 registers as device memory in the PMA"
+	depends on SOC_SERIES_RMX
+	depends on $(dt_nodelabel_enabled,uart0)
+	select SOC_EARLY_INIT_HOOK
+	help
+	  Program PMA entry 0 at boot so that the uart0 register range is
+	  device non-idempotent memory. Addresses without a PMA entry default
+	  to normal cacheable memory, so the core may merge and buffer stores
+	  to the UART registers and the UART setup is lost. Enable only on
+	  cores configured with PMA entries, the PMA CSRs are illegal
+	  otherwise.
